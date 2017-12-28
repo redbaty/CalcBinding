@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CalcBinding.PathAnalysis
+﻿namespace CalcBinding.PathAnalysis
 {
     public class PathTokenId
     {
-        public PathTokenType PathType { get; private set; }
-        public string Value { get; private set; }
-
         public PathTokenId(PathTokenType pathType, string value)
         {
             PathType = pathType;
             Value = value;
         }
+
+        public PathTokenType PathType { get; }
+        public string Value { get; }
 
         public override bool Equals(object obj)
         {
@@ -27,7 +21,7 @@ namespace CalcBinding.PathAnalysis
             if (o == null)
                 return false;
 
-            return (o.PathType == PathType && o.Value == Value);
+            return o.PathType == PathType && o.Value == Value;
         }
 
         public override int GetHashCode()

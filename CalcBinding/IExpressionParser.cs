@@ -1,5 +1,5 @@
-﻿using DynamicExpresso;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using DynamicExpresso;
 
 namespace CalcBinding
 {

@@ -2,62 +2,81 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Markup;
 
 namespace CalcBinding.PathAnalysis
 {
     /// <summary>
-    /// Idea of parser: to detect right all entries of property pathes, static property pathes etc. without parsing language structures
-    /// For full validation of expression there need to write own analizer of C# lanquage whick could determine xaml names too...
+    ///     Idea of parser: to detect right all entries of property pathes, static property pathes etc. without parsing
+    ///     language structures
+    ///     For full validation of expression there need to write own analizer of C# lanquage whick could determine xaml names
+    ///     too...
     /// </summary>
     public class PropertyPathAnalyzer
     {
-        #region Private fields
-        public static char[] UnknownDelimiters = new[] 
-            { 
-                '(', ')', '+', '-', '*', '/', '%', '^', '&', '|', '?', '<', '>', '=', '!', ',', ' '
-            };
-
-        public static char[] KnownDelimiters = new[]
-            {
-                '.', ':'
-            };
-
-        public static string[] Keywords = new[]
-            {
-                "null"
-            };
-
-        public static char[] QuoteTerminals = new[]
-            {
-                '\'', '"'
-            };
-
-        private static char[] delimiters;
-        private IXamlTypeResolver _typeResolver;
-
-        #endregion
-
-
         #region Static constructor
 
         static PropertyPathAnalyzer()
         {
             delimiters = KnownDelimiters.Concat(UnknownDelimiters).Concat(QuoteTerminals).ToArray();
-        } 
+        }
+
+        #endregion
+
+
+        #region Nested types
+
+        private class Chunk
+        {
+            public Chunk(string value, int startPosition, int endPosition)
+            {
+                Value = value;
+                Start = startPosition;
+                End = endPosition;
+            }
+
+            public string Value { get; }
+            public int Start { get; }
+            public int End { get; }
+        }
+
+        #endregion
+
+        #region Private fields
+
+        public static char[] UnknownDelimiters =
+        {
+            '(', ')', '+', '-', '*', '/', '%', '^', '&', '|', '?', '<', '>', '=', '!', ',', ' '
+        };
+
+        public static char[] KnownDelimiters =
+        {
+            '.', ':'
+        };
+
+        public static string[] Keywords =
+        {
+            "null"
+        };
+
+        public static char[] QuoteTerminals =
+        {
+            '\'', '"'
+        };
+
+        private static readonly char[] delimiters;
+        private IXamlTypeResolver _typeResolver;
 
         #endregion
 
 
         #region Parser cycle
 
-        public List<PathToken> GetPathes(string normPath, IXamlTypeResolver typeResolver)
+        public IEnumerable<PathToken> GetPathes(string normPath, IXamlTypeResolver typeResolver)
         {
             _typeResolver = typeResolver;
 
-            Debug.WriteLine(string.Format("PropertyPathAnalyzer.GetPathes: start read {0} ", normPath));
+            Debug.WriteLine($"PropertyPathAnalyzer.GetPathes: start read {normPath} ");
 
             var chunks = GetChunks(normPath);
             var pathes = GetPathes(chunks);
@@ -67,16 +86,16 @@ namespace CalcBinding.PathAnalysis
 
         private List<Chunk> GetChunks(string str)
         {
-            int chunkStart = 0;
+            var chunkStart = 0;
             var isChunk = false;
-            List<Chunk> chunks = new List<Chunk>();
-            int position = 0;
-            bool skip = false;
-            char skipTerminal = '\'';
+            var chunks = new List<Chunk>();
+            var position = 0;
+            var skip = false;
+            var skipTerminal = '\'';
 
             do
             {
-                var c = position >= str.Length ? (char)0 : str[position];
+                var c = position >= str.Length ? (char) 0 : str[position];
 
                 // skip strings
                 if (skip)
@@ -89,17 +108,14 @@ namespace CalcBinding.PathAnalysis
                     var isDelim = UnknownDelimiters.Contains(c) || QuoteTerminals.Contains(c) || c == 0;
 
                     if (isChunk)
-                    {
                         if (isDelim)
                         {
                             chunks.Add(new Chunk(SubStr(str, chunkStart, position - 1), chunkStart, position - 1));
                             isChunk = false;
                         }
-                    }
 
                     // dangerous code
                     if (!isChunk)
-                    {
                         if (isDelim)
                         {
                             if (QuoteTerminals.Contains(c))
@@ -113,20 +129,18 @@ namespace CalcBinding.PathAnalysis
                             chunkStart = position;
                             isChunk = true;
                         }
-                    }
                 }
 
                 if (c == 0)
                     return chunks;
 
                 position++;
-
             } while (true);
         }
 
         private List<PathToken> GetPathes(List<Chunk> chunks)
         {
-            List<PathToken> tokens = new List<PathToken>();
+            var tokens = new List<PathToken>();
 
             foreach (var chunk in chunks)
             {
@@ -144,7 +158,7 @@ namespace CalcBinding.PathAnalysis
 
         private bool GetPath(Chunk chunk, out PathToken pathToken)
         {
-            var str = (string)chunk.Value;
+            var str = chunk.Value;
 
             if (Keywords.Contains(str))
             {
@@ -161,14 +175,12 @@ namespace CalcBinding.PathAnalysis
                 if (IsIdentifier(left))
                 {
                     List<string> propChain;
-                    if (GetPropChain(SubStr(str, colonPos+1, str.Length-1), out propChain))
-                    {
+                    if (GetPropChain(SubStr(str, colonPos + 1, str.Length - 1), out propChain))
                         if (propChain.Count() > 1)
                         {
                             pathToken = GetEnumOrStaticProperty(chunk, left, propChain);
                             return true;
                         }
-                    }
                 }
             }
             else
@@ -187,7 +199,7 @@ namespace CalcBinding.PathAnalysis
 
         private bool GetPropChain(string str, out List<string> propChain)
         {
-            var properties = str.Split(new[] { '.' }, StringSplitOptions.None);
+            var properties = str.Split(new[] {'.'}, StringSplitOptions.None);
 
             if (properties.All(IsIdentifier) && properties.Any())
             {
@@ -206,10 +218,10 @@ namespace CalcBinding.PathAnalysis
 
             var firstChar = str[0];
 
-            if (Char.IsDigit(firstChar) || delimiters.Contains(firstChar))
+            if (char.IsDigit(firstChar) || delimiters.Contains(firstChar))
                 return false;
 
-            for (int i = 1; i <= str.Length - 1; i++)
+            for (var i = 1; i <= str.Length - 1; i++)
                 if (delimiters.Contains(str[i]))
                     return false;
 
@@ -221,13 +233,9 @@ namespace CalcBinding.PathAnalysis
             PathToken pathToken = null;
 
             if (propChain.Count() == 2 && propChain[0] == "Math")
-            {
                 pathToken = new MathToken(chunk.Start, chunk.End, propChain[1]);
-            }
             else
-            {
                 pathToken = new PropertyPathToken(chunk.Start, chunk.End, propChain);
-            }
 
             return pathToken;
         }
@@ -237,10 +245,10 @@ namespace CalcBinding.PathAnalysis
             PathToken pathToken = null;
             Type enumType;
             var className = identifierChain[0];
-            string fullClassName = string.Format("{0}:{1}", @namespace, className);
+            var fullClassName = string.Format("{0}:{1}", @namespace, className);
 
             var propertyChain = identifierChain.Skip(1).ToList();
-            if (propertyChain.Count == 1 && ((enumType = TakeEnum(fullClassName)) != null))
+            if (propertyChain.Count == 1 && (enumType = TakeEnum(fullClassName)) != null)
             {
                 // enum output
                 var enumMember = propertyChain.Single();
@@ -251,6 +259,7 @@ namespace CalcBinding.PathAnalysis
                 //static property path output
                 pathToken = new StaticPropertyPathToken(chunk.Start, chunk.End, @namespace, className, propertyChain);
             }
+
             return pathToken;
         }
 
@@ -265,43 +274,25 @@ namespace CalcBinding.PathAnalysis
         }
 
         /// <summary>
-        /// Found out whether xaml namespace:class is enum class or not. If yes, return enum type, otherwise - null 
+        ///     Found out whether xaml namespace:class is enum class or not. If yes, return enum type, otherwise - null
         /// </summary>
         /// <param name="namespace"></param>
         /// <param name="class"></param>
         /// <returns></returns>
         private Type TakeEnum(string fullTypeName)
         {
-            var @type = _typeResolver.Resolve(fullTypeName);
+            var type = _typeResolver.Resolve(fullTypeName);
 
-            if (@type != null && @type.IsEnum)
-                return @type;
+            if (type != null && type.IsEnum)
+                return type;
 
             return null;
         }
 
         private void TracePath(PathToken path)
         {
-            Debug.WriteLine(string.Format("PropertyPathAnalyzer: read {0} ({1}) ({2}-{3})", path.Id.Value, path.Id.PathType, path.Start, path.End));
-        }
-
-        #endregion
-
-
-        #region Nested types
-
-        class Chunk
-        {
-            public string Value { get; private set; }
-            public int Start { get; private set; }
-            public int End { get; private set; }
-
-            public Chunk(string value, int startPosition, int endPosition)
-            {
-                Value = value;
-                Start = startPosition;
-                End = endPosition;
-            }
+            Debug.WriteLine("PropertyPathAnalyzer: read {0} ({1}) ({2}-{3})", path.Id.Value, path.Id.PathType,
+                path.Start, path.End);
         }
 
         #endregion

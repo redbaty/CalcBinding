@@ -1,25 +1,25 @@
-﻿using DynamicExpresso;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using DynamicExpresso;
 
 namespace CalcBinding
 {
     public class InterpreterParser : IExpressionParser
     {
-        Interpreter interpreter;
-
         public InterpreterParser()
         {
-            interpreter = new Interpreter();
+            Interpreter = new Interpreter();
         }
+
+        public Interpreter Interpreter { get; }
 
         public Lambda Parse(string expressionText, Parameter[] parameters)
         {
-            return interpreter.Parse(expressionText, parameters);
+            return Interpreter.Parse(expressionText, parameters);
         }
 
         public void SetReference(IEnumerable<ReferenceType> referencedTypes)
         {
-            interpreter.Reference(referencedTypes);
+            Interpreter.Reference(referencedTypes);
         }
     }
 }

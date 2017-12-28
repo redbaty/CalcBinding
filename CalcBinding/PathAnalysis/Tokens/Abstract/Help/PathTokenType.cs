@@ -1,27 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CalcBinding.PathAnalysis
+﻿namespace CalcBinding.PathAnalysis
 {
     public enum PathTokenType
     {
         /// <summary>
-        /// Math, e.g. Math.Sin, Math.PI
+        ///     Math, e.g. Math.Sin, Math.PI
         /// </summary>
         Math,
+
         /// <summary>
-        /// Usual propertyPath, e.g. Name, Caption, Models.Count
+        ///     Usual propertyPath, e.g. Name, Caption, Models.Count
         /// </summary>
         Property,
+
         /// <summary>
-        /// Static propertyPatj, e.g. local:MyStaticVM.MyProp
+        ///     Static propertyPatj, e.g. local:MyStaticVM.MyProp
         /// </summary>
         StaticProperty,
+
         /// <summary>
-        /// Enum, e.g. local:MyEnum.MyValue
+        ///     Enum, e.g. local:MyEnum.MyValue
         /// </summary>
         Enum
     }
