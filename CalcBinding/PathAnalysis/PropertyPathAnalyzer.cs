@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Markup;
+using CalcBinding.PathAnalysis.Tokens.Abstract;
+using CalcBinding.PathAnalysis.Tokens.Realization;
 
 namespace CalcBinding.PathAnalysis
 {
@@ -18,7 +20,7 @@ namespace CalcBinding.PathAnalysis
 
         static PropertyPathAnalyzer()
         {
-            delimiters = KnownDelimiters.Concat(UnknownDelimiters).Concat(QuoteTerminals).ToArray();
+            Delimiters = KnownDelimiters.Concat(UnknownDelimiters).Concat(QuoteTerminals).ToArray();
         }
 
         #endregion
@@ -44,27 +46,27 @@ namespace CalcBinding.PathAnalysis
 
         #region Private fields
 
-        public static char[] UnknownDelimiters =
+        public static readonly char[] UnknownDelimiters =
         {
             '(', ')', '+', '-', '*', '/', '%', '^', '&', '|', '?', '<', '>', '=', '!', ',', ' '
         };
 
-        public static char[] KnownDelimiters =
+        public static readonly char[] KnownDelimiters =
         {
             '.', ':'
         };
 
-        public static string[] Keywords =
+        public static readonly string[] Keywords =
         {
             "null"
         };
 
-        public static char[] QuoteTerminals =
+        public static readonly char[] QuoteTerminals =
         {
             '\'', '"'
         };
 
-        private static readonly char[] delimiters;
+        private static readonly char[] Delimiters;
         private IXamlTypeResolver _typeResolver;
 
         #endregion
@@ -84,7 +86,7 @@ namespace CalcBinding.PathAnalysis
             return pathes;
         }
 
-        private List<Chunk> GetChunks(string str)
+        private static IEnumerable<Chunk> GetChunks(string str)
         {
             var chunkStart = 0;
             var isChunk = false;
@@ -138,19 +140,15 @@ namespace CalcBinding.PathAnalysis
             } while (true);
         }
 
-        private List<PathToken> GetPathes(List<Chunk> chunks)
+        private IEnumerable<PathToken> GetPathes(IEnumerable<Chunk> chunks)
         {
             var tokens = new List<PathToken>();
 
             foreach (var chunk in chunks)
             {
-                PathToken path;
-
-                if (GetPath(chunk, out path))
-                {
-                    TracePath(path);
-                    tokens.Add(path);
-                }
+                if (!GetPath(chunk, out var path)) continue;
+                TracePath(path);
+                tokens.Add(path);
             }
 
             return tokens;
@@ -174,9 +172,8 @@ namespace CalcBinding.PathAnalysis
 
                 if (IsIdentifier(left))
                 {
-                    List<string> propChain;
-                    if (GetPropChain(SubStr(str, colonPos + 1, str.Length - 1), out propChain))
-                        if (propChain.Count() > 1)
+                    if (GetPropChain(SubStr(str, colonPos + 1, str.Length - 1), out var propChain))
+                        if (propChain.Count > 1)
                         {
                             pathToken = GetEnumOrStaticProperty(chunk, left, propChain);
                             return true;
@@ -185,8 +182,7 @@ namespace CalcBinding.PathAnalysis
             }
             else
             {
-                List<string> propChain;
-                if (GetPropChain(str, out propChain))
+                if (GetPropChain(str, out var propChain))
                 {
                     pathToken = GetPropPathOrMath(chunk, propChain);
                     return true;
@@ -197,7 +193,7 @@ namespace CalcBinding.PathAnalysis
             return false;
         }
 
-        private bool GetPropChain(string str, out List<string> propChain)
+        private static bool GetPropChain(string str, out List<string> propChain)
         {
             var properties = str.Split(new[] {'.'}, StringSplitOptions.None);
 
@@ -211,28 +207,28 @@ namespace CalcBinding.PathAnalysis
             return false;
         }
 
-        private bool IsIdentifier(string str)
+        private static bool IsIdentifier(string str)
         {
             if (str.Length == 0)
                 return false;
 
             var firstChar = str[0];
 
-            if (char.IsDigit(firstChar) || delimiters.Contains(firstChar))
+            if (char.IsDigit(firstChar) || Delimiters.Contains(firstChar))
                 return false;
 
             for (var i = 1; i <= str.Length - 1; i++)
-                if (delimiters.Contains(str[i]))
+                if (Delimiters.Contains(str[i]))
                     return false;
 
             return true;
         }
 
-        private PathToken GetPropPathOrMath(Chunk chunk, List<string> propChain)
+        private static PathToken GetPropPathOrMath(Chunk chunk, IReadOnlyList<string> propChain)
         {
-            PathToken pathToken = null;
+            PathToken pathToken;
 
-            if (propChain.Count() == 2 && propChain[0] == "Math")
+            if (propChain.Count == 2 && propChain[0] == "Math")
                 pathToken = new MathToken(chunk.Start, chunk.End, propChain[1]);
             else
                 pathToken = new PropertyPathToken(chunk.Start, chunk.End, propChain);
@@ -240,12 +236,12 @@ namespace CalcBinding.PathAnalysis
             return pathToken;
         }
 
-        private PathToken GetEnumOrStaticProperty(Chunk chunk, string @namespace, List<string> identifierChain)
+        private PathToken GetEnumOrStaticProperty(Chunk chunk, string @namespace, IReadOnlyList<string> identifierChain)
         {
-            PathToken pathToken = null;
+            PathToken pathToken;
             Type enumType;
             var className = identifierChain[0];
-            var fullClassName = string.Format("{0}:{1}", @namespace, className);
+            var fullClassName = $"{@namespace}:{className}";
 
             var propertyChain = identifierChain.Skip(1).ToList();
             if (propertyChain.Count == 1 && (enumType = TakeEnum(fullClassName)) != null)
@@ -268,7 +264,7 @@ namespace CalcBinding.PathAnalysis
 
         #region Help methods
 
-        private string SubStr(string str, int start, int end)
+        private static string SubStr(string str, int start, int end)
         {
             return str.Substring(start, end - start + 1);
         }
@@ -276,8 +272,7 @@ namespace CalcBinding.PathAnalysis
         /// <summary>
         ///     Found out whether xaml namespace:class is enum class or not. If yes, return enum type, otherwise - null
         /// </summary>
-        /// <param name="namespace"></param>
-        /// <param name="class"></param>
+        /// <param name="fullTypeName"></param>
         /// <returns></returns>
         private Type TakeEnum(string fullTypeName)
         {
@@ -289,7 +284,7 @@ namespace CalcBinding.PathAnalysis
             return null;
         }
 
-        private void TracePath(PathToken path)
+        private static void TracePath(PathToken path)
         {
             Debug.WriteLine("PropertyPathAnalyzer: read {0} ({1}) ({2}-{3})", path.Id.Value, path.Id.PathType,
                 path.Start, path.End);

@@ -1,4 +1,6 @@
-﻿namespace CalcBinding.PathAnalysis
+﻿using CalcBinding.PathAnalysis.Tokens.Abstract.Help;
+
+namespace CalcBinding.PathAnalysis.Tokens.Abstract
 {
     public abstract class PathToken
     {

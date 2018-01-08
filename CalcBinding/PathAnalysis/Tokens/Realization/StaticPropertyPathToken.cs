@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using CalcBinding.PathAnalysis.Tokens.Abstract.Help;
 
-namespace CalcBinding.PathAnalysis
+namespace CalcBinding.PathAnalysis.Tokens.Realization
 {
     public class StaticPropertyPathToken : PropertyPathToken
     {

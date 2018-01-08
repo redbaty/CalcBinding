@@ -229,7 +229,7 @@ namespace CalcBinding
         {
             var parametersDefinition = new List<Parameter>();
 
-            for (var i = 0; i < argumentsTypes.Count(); i++)
+            for (var i = 0; i < argumentsTypes.Count; i++)
             {
                 var paramName = GetVariableName(i);
 

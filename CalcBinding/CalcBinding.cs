@@ -7,6 +7,9 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
 using CalcBinding.PathAnalysis;
+using CalcBinding.PathAnalysis.Tokens.Abstract;
+using CalcBinding.PathAnalysis.Tokens.Abstract.Help;
+using CalcBinding.PathAnalysis.Tokens.Realization;
 
 namespace CalcBinding
 {
@@ -54,8 +57,7 @@ namespace CalcBinding
             var normalizedPath = NormalizePath(Path);
             var pathes = GetSourcePathes(normalizedPath, typeResolver);
 
-            Dictionary<string, Type> enumParameters;
-            var expressionTemplate = GetExpressionTemplate(normalizedPath, pathes, out enumParameters);
+            var expressionTemplate = GetExpressionTemplate(normalizedPath, pathes, out var enumParameters);
 
             var mathConverter = new CalcConverter(enumParameters)
             {
@@ -212,9 +214,8 @@ namespace CalcBinding
             while (sourceIndex < path.Length)
             {
                 var replaced = false;
-                for (var index = 0; index < properties.Count(); index++)
+                foreach (var propGroup in properties)
                 {
-                    var propGroup = properties[index];
                     var propId = propGroup.PathId;
                     var targetProp = propGroup.Pathes.FirstOrDefault(token => token.Start == sourceIndex);
 
@@ -265,6 +266,10 @@ namespace CalcBinding
                             replaced = true;
                             break;
                         }
+                        case PathTokenType.Math:
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
                     }
 
                     if (replaced)
@@ -295,7 +300,7 @@ namespace CalcBinding
         {
             var propertyPathAnalyzer = new PropertyPathAnalyzer();
 
-            var pathes = propertyPathAnalyzer.GetPathes(normPath, typeResolver).Where(i => normPath[i.End + 1] != '(');
+            var pathes = propertyPathAnalyzer.GetPathes(normPath, typeResolver).Where(i => i.Id.PathType != PathTokenType.Property || normPath[i.End + 1] != '(');
 
             var propertiesGroups =
                 pathes.GroupBy(p => p.Id).Select(p => new PathAppearances(p.Key, p.ToList())).ToList();
@@ -347,7 +352,7 @@ namespace CalcBinding
 
         private class PathAppearances
         {
-            public PathAppearances(PathTokenId id, List<PathToken> pathes)
+            public PathAppearances(PathTokenId id, IEnumerable<PathToken> pathes)
             {
                 PathId = id;
                 Pathes = pathes;
@@ -359,17 +364,6 @@ namespace CalcBinding
         }
 
         #region Binding Properties
-
-        //
-        // Summary:
-        //     Gets or sets the converter to use to convert the source values to or from
-        //     the target value.
-        //
-        // Returns:
-        //     A value of type System.Windows.Data.IMultiValueConverter that indicates the
-        //     converter to use. The default value is null.
-        [DefaultValue("")]
-        public IMultiValueConverter Converter { get; set; }
 
         //
         // Summary:

@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using CalcBinding.PathAnalysis.Tokens.Abstract;
+using CalcBinding.PathAnalysis.Tokens.Abstract.Help;
 
-namespace CalcBinding.PathAnalysis
+namespace CalcBinding.PathAnalysis.Tokens.Realization
 {
     public class PropertyPathToken : PathToken
     {

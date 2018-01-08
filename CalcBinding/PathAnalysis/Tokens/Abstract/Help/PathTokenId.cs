@@ -1,4 +1,4 @@
-﻿namespace CalcBinding.PathAnalysis
+﻿namespace CalcBinding.PathAnalysis.Tokens.Abstract.Help
 {
     public class PathTokenId
     {
@@ -13,12 +13,7 @@
 
         public override bool Equals(object obj)
         {
-            if (obj == null)
-                return false;
-
-            var o = obj as PathTokenId;
-
-            if (o == null)
+            if (!(obj is PathTokenId o))
                 return false;
 
             return o.PathType == PathType && o.Value == Value;

@@ -1,4 +1,7 @@
-﻿namespace CalcBinding.PathAnalysis
+﻿using CalcBinding.PathAnalysis.Tokens.Abstract;
+using CalcBinding.PathAnalysis.Tokens.Abstract.Help;
+
+namespace CalcBinding.PathAnalysis.Tokens.Realization
 {
     public class MathToken : PathToken
     {

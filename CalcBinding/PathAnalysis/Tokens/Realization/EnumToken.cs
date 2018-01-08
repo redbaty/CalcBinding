@@ -1,6 +1,8 @@
 ﻿using System;
+using CalcBinding.PathAnalysis.Tokens.Abstract;
+using CalcBinding.PathAnalysis.Tokens.Abstract.Help;
 
-namespace CalcBinding.PathAnalysis
+namespace CalcBinding.PathAnalysis.Tokens.Realization
 {
     public class EnumToken : PathToken
     {
@@ -11,7 +13,7 @@ namespace CalcBinding.PathAnalysis
             EnumMember = enumMember;
             Namespace = @namespace;
 
-            Id = new PathTokenId(PathTokenType.Enum, string.Format("{0}:{1}.{2}", Namespace, @enum.Name, EnumMember));
+            Id = new PathTokenId(PathTokenType.Enum, $"{Namespace}:{@enum.Name}.{EnumMember}");
         }
 
         public Type Enum { get; }

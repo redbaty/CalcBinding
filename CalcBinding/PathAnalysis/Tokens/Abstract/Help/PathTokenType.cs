@@ -1,4 +1,4 @@
-﻿namespace CalcBinding.PathAnalysis
+﻿namespace CalcBinding.PathAnalysis.Tokens.Abstract.Help
 {
     public enum PathTokenType
     {
@@ -6,7 +6,7 @@
         ///     Math, e.g. Math.Sin, Math.PI
         /// </summary>
         Math,
-
+        
         /// <summary>
         ///     Usual propertyPath, e.g. Name, Caption, Models.Count
         /// </summary>
